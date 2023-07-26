@@ -32,8 +32,12 @@ const User = sequelize.define('User', {
     age: {
         type: DataTypes.INTEGER,
         allowNull: false,
-    },
-})
+    }
+},
+    {
+        paranoid: true, // enable soft delete
+    }
+);
 
 //middleware of KOA
 app.use(bodyParser());
@@ -42,7 +46,7 @@ app.use(bodyParser());
 // * Koa router
 // Getting all the users ---------- GET
 router.get('/users', async (ctx) => {
-    const posts = await User.findAll();
+    const posts = await User.findAll({ paranoid: false });
     ctx.body = posts;
 });
 
@@ -80,6 +84,19 @@ router.delete('/users/:id', async (ctx) => {
     ctx.body = { message: "User deleted successfully" }
 })
 
+
+// //Hard
+// router.delete('/users/hard/:id', async (ctx) => {
+//     const { id } = ctx.params;
+//     const user = await User.findByPk(id);
+//     if (!user) {
+//         ctx.status = 404;
+//         ctx.body = { error: 'User not found' }
+//         return;
+//     }
+//     await user.destroy({ force: true });
+//     ctx.body = { message: "User hard deleted successfully" }
+// })
 
 
 app.use(router.routes());

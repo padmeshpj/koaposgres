@@ -47,12 +47,19 @@ app.use(bodyParser());
 // * Koa router
 // Getting all the users ---------------- GET
 router.get('/users', async (ctx) => {
-  const posts = await User.findAll({
-    paranoid: false,
-    attributes: { exclude: ['updatedAt', 'deletedAt', 'createdAt'] },
-    include: Address,
-  });
-  ctx.body = posts;
+  try {
+    const posts = await User.findAll({
+      paranoid: false,
+      attributes: { exclude: ['updatedAt', 'deletedAt', 'createdAt'] },
+      include: {
+        model: Address,
+        attributes: ['street', 'city', 'state', 'zipCode'], //Only the desired attributes from Address model
+      },
+    });
+    ctx.body = posts;
+  } catch (error) {
+    console.log('errrrrrr', error);
+  }
 });
 
 //Getting 1 user ------------------------ GET

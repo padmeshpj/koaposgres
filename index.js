@@ -128,16 +128,62 @@ router.post('/users', async (ctx) => {
 //Updating the user ---------------------- PUT
 router.put('/users/:id', async (ctx) => {
   const { id } = ctx.params;
-  const { name, gender, age } = ctx.request.body;
-  const user = await User.findByPk(id);
-  if (!user) {
-    ctx.status = 404;
-    ctx.body = { error: 'User not found' }
-    return;
+  const { name, gender, age, address } = ctx.request.body;
+  try {
+    let user = await User.findByPk(id, {
+      include: Address // Include the associated Address model while querying the User
+    });
+
+    if (!user) {
+      ctx.status = 404;
+      ctx.body = { error: 'User not found' }
+      return;
+    }
+    // If the 'address' field is provided in the request body, update the associated address
+    if (address) {
+      if (user.Address) {
+        // If the user already has an associated address, update it
+        await user.Address.update({
+          street: address.street,
+          city: address.city,
+          state: address.state,
+          zipCode: address.zipCode,
+        });
+      } else {
+        // If the user doesn't have an associated address, create a new one
+        await Address.create({
+          street: address.street,
+          city: address.city,
+          state: address.state,
+          zipCode: address.zipCode,
+          UserId: user.id, // Assuming you have a foreign key named 'UserId' in the Address model
+        });
+      }
+    }
+    // Update the user info
+    await user.update({ name, gender, age });
+    // Fetch the updated user and associated address to send back in the response
+    user = await User.findByPk(id, {
+      include: Address // Include the associated Address model
+    });
+    ctx.body = {
+      name: user.name,
+      gender: user.gender,
+      age: user.age,
+      address: user.Address ? {
+        street: user.Address.street,
+        city: user.Address.city,
+        state: user.Address.state,
+        zipCode: user.Address.zipCode,
+      } : null,
+    };
+  } catch (error) {
+    console.log(error);
+    ctx.status = 500;
+    ctx.body = { error: 'Internal Server Error' };
   }
-  await user.update({ name, gender, age });
-  ctx.body = { name, gender, age };
-})
+});
+
 
 //Deleting the user ---------------------- DELETE
 router.delete('/users/:id', async (ctx) => {

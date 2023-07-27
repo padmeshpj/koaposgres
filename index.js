@@ -73,28 +73,36 @@ router.post('/users', async (ctx) => {
   const { name, gender, age, address } = ctx.request.body; // Assuming address contains street, city, state, zipCode
 
   try {
-    const user = await User.create({ name, gender, age });
+    let createdUser;
 
+    // Create the user along with the associated address (if available)
     if (address) {
-      const createdAddress = await Address.create({
-        street: address.street,
-        city: address.city,
-        state: address.state,
-        zipCode: address.zipCode,
-        UserId: user.id,
+      createdUser = await User.create({
+        name,
+        gender,
+        age,
+        Address: {
+          street: address.street,
+          city: address.city,
+          state: address.state,
+          zipCode: address.zipCode,
+        },
+      }, {
+        include: Address, // Include the associated Address model while creating the User
       });
-
-      user.setAddress(createdAddress); // Associate the address with the user
-      user.dataValues.address = createdAddress; // Add the address data to the user object
+    } else {
+      // If no address is provided, create the user without the address
+      createdUser = await User.create({ name, gender, age });
     }
 
-    ctx.body = user;
+    ctx.body = createdUser;
   } catch (err) {
     console.log('Error:', err);
     ctx.status = 500;
     ctx.body = { error: 'An error occurred while creating the user.' };
   }
 });
+
 
 //Updating the user ---------------------- PUT
 router.put('/users/:id', async (ctx) => {

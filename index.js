@@ -62,10 +62,17 @@ router.get('/users', async (ctx) => {
   }
 });
 
-//Getting 1 user ------------------------ GET
+//Getting Single user ------------------------ GET
 router.get('/users/:id', async (ctx) => {
   const { id } = ctx.params;
-  const user = await User.findByPk(id, { attributes: { exclude: ['updatedAt', 'deletedAt', 'createdAt'] } });
+  const user = await User.findByPk(id,
+    {
+      attributes: { exclude: ['updatedAt', 'deletedAt', 'createdAt'] },
+      include: {
+        model: Address,
+        attributes: ['street', 'city', 'state', 'zipCode'], //Only the desired attributes from Address model
+      },
+    });
   if (!user) {
     ctx.status = 404;
     ctx.body = { error: 'User not found' }
@@ -75,14 +82,10 @@ router.get('/users/:id', async (ctx) => {
 })
 
 //Creating the user --------------------- POST
-
-
 router.post('/users', async (ctx) => {
   const { name, gender, age, address } = ctx.request.body; // Assuming address contains street, city, state, zipCode
-
   try {
     let createdUser;
-
     // Create the user along with the associated address (if available)
     if (address) {
       createdUser = await User.create({
@@ -122,8 +125,6 @@ router.post('/users', async (ctx) => {
     ctx.body = { error: 'An error occurred while creating the user.' };
   }
 });
-
-
 
 //Updating the user ---------------------- PUT
 router.put('/users/:id', async (ctx) => {
@@ -183,7 +184,6 @@ router.put('/users/:id', async (ctx) => {
     ctx.body = { error: 'Internal Server Error' };
   }
 });
-
 
 //Deleting the user ---------------------- DELETE
 router.delete('/users/:id', async (ctx) => {

@@ -69,6 +69,7 @@ router.get('/users/:id', async (ctx) => {
 
 //Creating the user --------------------- POST
 
+
 router.post('/users', async (ctx) => {
   const { name, gender, age, address } = ctx.request.body; // Assuming address contains street, city, state, zipCode
 
@@ -95,13 +96,26 @@ router.post('/users', async (ctx) => {
       createdUser = await User.create({ name, gender, age });
     }
 
-    ctx.body = createdUser;
+    // ctx.body = createdUser;
+    ctx.body = {
+      name: createdUser.name,
+      gender: createdUser.gender,
+      age: createdUser.age,
+      address: createdUser.Address ? {
+        street: createdUser.Address.street,
+        city: createdUser.Address.city,
+        state: createdUser.Address.state,
+        zipCode: createdUser.Address.zipCode,
+      } : null, //if Address ips true then addr prop. will show else show null
+    };
+
   } catch (err) {
     console.log('Error:', err);
     ctx.status = 500;
     ctx.body = { error: 'An error occurred while creating the user.' };
   }
 });
+
 
 
 //Updating the user ---------------------- PUT
